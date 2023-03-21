@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 import sqlite3
 from sqlite3 import Error
 DATABASE = "C:/Users/19163/OneDrive - Wellington College/13DTS/Flask Project/Smile/smile.db"
@@ -35,6 +35,18 @@ def render_contact_page():
 @app.route('/login', methods=['POST', 'GET'])
 def render_login():
     return render_template('login.html')
+
+@app.route('/signup', methods=['POST', 'GET'])
+def render_signup():
+    if request.method == 'POST':
+        print(request.form)
+        fname = request.form.get('fname')
+        lname= request.form.get('lname')
+        email = request.form.get('email').lower().strip()
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
+
+    return render_template('signup.html')
 
 
 app.run(host='0.0.0.0', debug=True)
