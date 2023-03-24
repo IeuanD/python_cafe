@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
 from sqlite3 import Error
+from flask_bcrypt import Bcrypt
 DATABASE = "C:/Users/19163/OneDrive - Wellington College/13DTS/Flask Project/Smile/smile.db"
 app = Flask(__name__)
-
+bcrypt = Bcrypt(app)
+app.secret_key = "asdasd12"
 def create_connection(db_file):
     try:
         connection = sqlite3.connect(db_file)
@@ -29,6 +31,16 @@ def render_menu_page(cat_id):
 
 @app.route('/contact')
 def render_contact_page():
+    if request.method == "POST":
+        email.request.form['email'].strip().lower()
+        password = request.form['password'].strip()
+
+        query = "SELECT id, fname, password FROM customer WHERE email = ?"
+        con = create_connection(DATABASE)
+        cur = con.cursor()
+        cur.execute(query, (email,))
+        user_data = cur.fetchall()
+        con.close()
     return render_template('contact.html')
 
 
@@ -40,12 +52,32 @@ def render_login():
 def render_signup():
     if request.method == 'POST':
         print(request.form)
-        fname = request.form.get('fname')
-        lname= request.form.get('lname')
+        fname = request.form.get('fname').title().strip()
+        lname= request.form.get('lname').title().strip()
         email = request.form.get('email').lower().strip()
         password = request.form.get('password')
         password2 = request.form.get('password2')
 
+        if password != password2:
+            return redirect("/signup?error=Passwords+do+not+match")
+
+        if len(password) < 8:
+            return redirect("/signup?error=Password+must+be+at+least+8+characters")
+        hashed_password = bcrypt.generate_password_hash(password)
+        con = create_connection(DATABASE)
+        query = "INSERT INTO user(fname, lname, email, password) VALUES (?, ?, ?, ?)"
+        cur = con.cursor
+
+        try:
+            cur.execute(query, (fname, lname, email, hashed_password))
+        except sqlite3.IntegrityError:
+            con.close()
+            return redirect('/signup?error=Email+is+already+in+use')
+
+        con.commit
+        con.close
+
+        return redirect('/login')
     return render_template('signup.html')
 
 
